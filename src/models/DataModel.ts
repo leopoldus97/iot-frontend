@@ -1,6 +1,6 @@
 export interface DataModel {
   _id: string;
-  measurementTime: Date;
+  measurementTime: string;
   value: number;
   sensorId: string;
 }

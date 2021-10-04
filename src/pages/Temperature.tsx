@@ -1,9 +1,12 @@
 import { gql, useQuery } from "@apollo/client";
-import { BubbleDataPoint, ChartData, ScatterDataPoint } from "chart.js";
 import { Line } from "react-chartjs-2";
-import { DataEntry } from "../models/DataEntry";
 import { DataModel } from "../models/DataModel";
-import { DataSeries } from "../models/DataSeries";
+import DateAdapter from '@mui/lab/AdapterDateFns';
+import { DatePicker, LocalizationProvider } from "@mui/lab";
+import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import { useState } from "react";
+
+type MeasurementType = "humidity" | "temperature";
 
 const Temperature = () => {
   const TEMPERATURES_QUERY = gql`
@@ -19,41 +22,60 @@ const Temperature = () => {
   const { loading, error, data } =
     useQuery<{ temperatures: DataModel[] }>(TEMPERATURES_QUERY);
 
-  const s = data?.temperatures.map((measurements) => {
-    const series: DataEntry[] = [];
-    const dataSeries: DataSeries = {
-      name: "FancySensor3000",
-      series: series,
-    };
-    if (measurements instanceof Array) {
-      measurements.forEach((m) => {
-        series.push({
-          name: m.measurementTime.toString(),
-          value: m.value,
-        });
-      });
-    }
-    return dataSeries;
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
   });
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
 
-  const chartData: ChartData = {
-    datasets: [
-      {
-        label: "Temperature",
-        data: [23, 19, 3, 5, 2, 3],
-        fill: false,
-        backgroundColor: "rgb(255, 99, 132)",
-        borderColor: "rgba(255, 99, 132, 0.2)",
-      },
-    ],
-  };
+  const chartData = (data: DataModel[]) => {
+    return {
+      labels: data.map(record => new Date(record.measurementTime).toLocaleTimeString()),
+      datasets: [
+        {
+          label: "Temperature",
+          data: data.map(temp => temp.value),
+          fill: false,
+          backgroundColor: "rgb(255, 99, 132)",
+          borderColor: "rgba(255, 99, 132, 0.2)",
+        }
+      ],
+    };
+  }
+
+  const filterRecords = (record: DataModel) => {
+    const date = new Date(record.measurementTime);
+    const nextDay = new Date(selectedDate);
+    nextDay.setDate(nextDay.getDate() + 1);
+    return date >= selectedDate && date < nextDay;
+  }
+
 
   return (
-    <div style={{ width: "80%", height: "80%" }}>
-      <Line data={[s]} />
+    <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
+      <div style={{ margin: "16px 0px" }}>
+        <LocalizationProvider dateAdapter={DateAdapter}>
+          <DatePicker
+            label="Basic example"
+            value={selectedDate}
+            onChange={(newValue) => setSelectedDate(newValue!)}
+            renderInput={(params) => <TextField {...params} />}
+          />
+        </LocalizationProvider>
+        <FormControl>
+          <InputLabel id="demo-simple-select-label">Measurement</InputLabel>
+          <Select>
+            <MenuItem value={""}>Humidity</MenuItem>
+            <MenuItem value={""}>Temperature</MenuItem>
+          </Select>
+        </FormControl>
+      </div>
+      <div>
+        {data ? <Line style={{ flex: "0 0 20px" }} data={chartData(data.temperatures.filter(filterRecords))} /> : <span>Loading...</span>}
+      </div>
     </div>
   );
 };
