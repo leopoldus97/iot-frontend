@@ -8,25 +8,36 @@ import { useState } from "react";
 
 type MeasurementType = "humidity" | "temperature";
 
-const Temperature = () => {
-  const TEMPERATURES_QUERY = gql`
-    query GetTemperatures {
-      temperatures(filter: { sensorId: "FancySensor3000" }) {
-        _id
-        measurementTime
-        value
-      }
+const TEMPERATURES_QUERY = gql`
+  query GetTemperatures {
+    records: temperatures(filter: { sensorId: "FancySensor3000" }) {
+      _id
+      measurementTime
+      value
     }
-  `;
+  }
+`;
 
-  const { loading, error, data } =
-    useQuery<{ temperatures: DataModel[] }>(TEMPERATURES_QUERY);
+const HUMIDITY_QUERY = gql`
+  query GetHumidity {
+    records: humidities(filter: { sensorId: "FancySensor3000" }) {
+      _id
+      measurementTime
+      value
+    }
+  }
+`;
 
+const Temperature = () => {
   const [selectedDate, setSelectedDate] = useState(() => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     return date;
   });
+  const [selectedMeasurement, setSelectedMeasurement] = useState<MeasurementType>("temperature");
+
+  const { loading, error, data } =
+    useQuery<{ records: DataModel[] }>(selectedMeasurement === "temperature" ? TEMPERATURES_QUERY : HUMIDITY_QUERY);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error.message}</p>;
@@ -36,7 +47,7 @@ const Temperature = () => {
       labels: data.map(record => new Date(record.measurementTime).toLocaleTimeString()),
       datasets: [
         {
-          label: "Temperature",
+          label: selectedMeasurement === "temperature" ? "Temperature" : "Humidity",
           data: data.map(temp => temp.value),
           fill: false,
           backgroundColor: "rgb(255, 99, 132)",
@@ -53,10 +64,9 @@ const Temperature = () => {
     return date >= selectedDate && date < nextDay;
   }
 
-
   return (
     <div style={{ display: "flex", flexDirection: "column", width: "100%", height: "100%" }}>
-      <div style={{ margin: "16px 0px" }}>
+      <div style={{ margin: "16px 0px", display: "flex", flexDirection: "row" }}>
         <LocalizationProvider dateAdapter={DateAdapter}>
           <DatePicker
             label="Basic example"
@@ -65,16 +75,16 @@ const Temperature = () => {
             renderInput={(params) => <TextField {...params} />}
           />
         </LocalizationProvider>
-        <FormControl>
-          <InputLabel id="demo-simple-select-label">Measurement</InputLabel>
-          <Select>
-            <MenuItem value={""}>Humidity</MenuItem>
-            <MenuItem value={""}>Temperature</MenuItem>
+        <FormControl fullWidth>
+          <InputLabel id="select-label">Measurement</InputLabel>
+          <Select label="Measurement" labelId="select-label" value={selectedMeasurement} onChange={ev => setSelectedMeasurement(ev.target.value as MeasurementType)}>
+            <MenuItem value={"humidity"}>Humidity</MenuItem>
+            <MenuItem value={"temperature"}>Temperature</MenuItem>
           </Select>
         </FormControl>
       </div>
       <div>
-        {data ? <Line style={{ flex: "0 0 20px" }} data={chartData(data.temperatures.filter(filterRecords))} /> : <span>Loading...</span>}
+        {data ? <Line style={{ flex: "0 0 20px" }} data={chartData(data.records.filter(filterRecords))} /> : <span>Loading...</span>}
       </div>
     </div>
   );
