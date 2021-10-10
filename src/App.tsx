@@ -15,7 +15,7 @@ const httpLink = new HttpLink({
 });
 
 const wsLink = new WebSocketLink({
-  uri: "ws://iot-server-007.herokuapp.com/graphql",
+  uri: "wss://iot-server-007.herokuapp.com/graphql",
   options: {
     reconnect: true,
   },
