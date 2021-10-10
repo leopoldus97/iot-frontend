@@ -1,5 +1,4 @@
 import "./App.css";
-// import NavbarComp from "./components/ui/NavbarComp";
 import {
   ApolloClient,
   InMemoryCache,
@@ -12,11 +11,11 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import Routing from "./pages/Routing";
 
 const httpLink = new HttpLink({
-  uri: "http://localhost:3000/graphql",
+  uri: "https://iot-server-007.herokuapp.com/graphql",
 });
 
 const wsLink = new WebSocketLink({
-  uri: "ws://localhost:3000/graphql",
+  uri: "ws://iot-server-007.herokuapp.com/graphql",
   options: {
     reconnect: true,
   },
@@ -42,7 +41,6 @@ const client = new ApolloClient({
 function App() {
   return (
     <div className="App">
-      {/* <NavbarComp /> */}
       <ApolloProvider client={client}>
         <Routing />
       </ApolloProvider>
