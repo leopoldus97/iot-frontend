@@ -1,5 +1,4 @@
 import "./App.css";
-import Temperature from "./pages/Temperature";
 // import NavbarComp from "./components/ui/NavbarComp";
 import {
   ApolloClient,
@@ -10,6 +9,7 @@ import {
 } from "@apollo/client";
 import { WebSocketLink } from "@apollo/client/link/ws";
 import { getMainDefinition } from "@apollo/client/utilities";
+import Routing from "./pages/Routing";
 
 const httpLink = new HttpLink({
   uri: "http://localhost:3000/graphql",
@@ -44,7 +44,7 @@ function App() {
     <div className="App">
       {/* <NavbarComp /> */}
       <ApolloProvider client={client}>
-        <Temperature />
+        <Routing />
       </ApolloProvider>
     </div>
   );
